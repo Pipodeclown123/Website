@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bestie ♡</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="topbar">
+        <h1>My Bestie <span>♡</span></h1>
+        <p>Jouw eigen virtuele bestie!</p>
+    </header>
+
+    <div class="app">
+
+        <aside class="sidebar">
+            <h2>Menu 🎀</h2>
+            <button class="nav-button active" data-page="home">🏠 Home</button>
+            <button class="nav-button" data-page="chat">💬 Chat</button>
+            <button class="nav-button" data-page="diary">📖 Dagboek</button>
+            <button class="nav-button" data-page="room">🛏️ Kamertje</button>
+            <button class="nav-button" data-page="settings">⚙️ Instellingen</button>
+        </aside>
+
+        <main class="content">
+
+            <section id="home" class="page active">
+                <div class="welcome-card">
+                    <h2>Welkom bij My Bestie! 💗</h2>
+                    <p>Hier begint jullie vriendschap!</p>
+                </div>
+
+                <div class="bestie-card">
+                    <div id="home-avatar" class="avatar">🐰</div>
+                    <h2 id="home-name">Jouw bestie</h2>
+                    <p id="home-description">Je nieuwe beste vriend(in)!</p>
+                    <button class="main-button" data-go="chat">
+                        Ga gezellig kletsen 💬
+                    </button>
+                </div>
+
+                <div class="quick-links">
+                    <button data-go="diary">📖 Mijn dagboek</button>
+                    <button data-go="room">🛏️ Haar kamertje</button>
+                </div>
+            </section>
+
+            <section id="chat" class="page">
+                <div class="section-heading">
+                    <h2>💬 Onze chat</h2>
+                    <p>Praat gezellig met je bestie!</p>
+                </div>
+
+                <div class="chat-box">
+                    <div id="messages" class="messages">
+                        <p class="message bestie-message">
+                            Hoiiii! 💗 Wat leuk dat je er bent!
+                        </p>
+                    </div>
+
+                    <form id="chat-form" class="chat-form">
+                        <input
+                            id="chat-input"
+                            type="text"
+                            placeholder="Typ een berichtje..."
+                            maxlength="500"
+                            autocomplete="off"
+                            required
+                        >
+                        <button type="submit">Verstuur 💌</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="diary" class="page">
+                <div class="section-heading">
+                    <h2>📖 Ons dagboek</h2>
+                    <p>Bewaar hier jullie leuke herinneringen!</p>
+                </div>
+
+                <form id="diary-form" class="diary-card">
+                    <label for="diary-input">Wat wil je opschrijven?</label>
+                    <textarea
+                        id="diary-input"
+                        placeholder="Vandaag was een leuke dag omdat..."
+                        maxlength="2000"
+                        required
+                    ></textarea>
+                    <button class="main-button" type="submit">
+                        Bewaar herinnering 💗
+                    </button>
+                </form>
+
+                <div id="diary-entries" class="diary-entries"></div>
+            </section>
+
+            <section id="room" class="page">
+                <div class="section-heading">
+                    <h2>🛏️ Het kamertje</h2>
+                    <p>Welkom in het gezellige kamertje van je bestie!</p>
+                </div>
+
+                <div class="room">
+                    <div class="room-decoration">⭐ 🌸 ⭐</div>
+                    <div id="room-avatar" class="room-avatar">🐰</div>
+                    <div id="room-name" class="room-name">Jouw bestie</div>
+                    <div class="room-furniture">🛋️ 🧸 🌷 🪴</div>
+                </div>
+            </section>
+
+            <section id="settings" class="page">
+                <div class="section-heading">
+                    <h2>⚙️ Instellingen</h2>
+                    <p>Maak jouw bestie helemaal eigen!</p>
+                </div>
+
+                <form id="settings-form" class="settings-card">
+                    <label for="bestie-name">Naam van je bestie</label>
+                    <input id="bestie-name" type="text" maxlength="20" required>
+
+                    <label for="bestie-type">Kies je bestie</label>
+                    <select id="bestie-type">
+                        <option value="girl">Meisje 🎀</option>
+                        <option value="boy">Jongen 💙</option>
+                    </select>
+
+                    <label for="bestie-avatar">Kies een avatar</label>
+                    <select id="bestie-avatar">
+                        <option value="🐰">Konijntje 🐰</option>
+                        <option value="🐱">Katje 🐱</option>
+                        <option value="🐻">Beertje 🐻</option>
+                        <option value="🦊">Vosje 🦊</option>
+                        <option value="🐼">Panda 🐼</option>
+                        <option value="🦄">Eenhoorn 🦄</option>
+                        <option value="🐸">Kikkertje 🐸</option>
+                    </select>
+
+                    <button class="main-button" type="submit">
+                        Opslaan 💕
+                    </button>
+                </form>
+            </section>
+
+        </main>
+    </div>
+
+    <footer>
+        My Bestie ♡ Made with love
+    </footer>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
