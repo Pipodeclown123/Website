@@ -12,13 +12,13 @@ import {
 
 // VERVANG DIT DOOR JE EIGEN FIREBASE CONFIGURATIE
 const firebaseConfig = {
-    apiKey: "VUL_HIER_JE_API_KEY_IN",
-    authDomain: "JOUW-PROJECT.firebaseapp.com",
-    databaseURL: "https://JOUW-PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "JOUW-PROJECT",
-    storageBucket: "JOUW-PROJECT.firebasestorage.app",
-    messagingSenderId: "VUL_HIER_IN",
-    appId: "VUL_HIER_IN"
+    apiKey: "AIzaSyAAq7fjLRJkFy3T6DGdI__ykWpxleESR9M",
+    authDomain: "website-a3e4c.firebaseapp.com",
+    databaseURL: "https://website-a3e4c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "website-a3e4c",
+    storageBucket: "website-a3e4c.firebasestorage.app",
+    messagingSenderId: "723433682510",
+    appId: "1:723433682510:web:f6820e781ee2efbb8d351f"
 };
 
 const app = initializeApp(firebaseConfig);
