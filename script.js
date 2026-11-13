@@ -7,34 +7,14 @@ import {
     set,
     push,
     onValue,
-    remove,
-    serverTimestamp
+    remove
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
-// =====================================
-// 1. FIREBASE VERBINDING
-// =====================================
+// ======================================
+// 1. MENU - WERKT DIRECT
+// ======================================
 
-let uid = null;
-
-try {
-    const credential = await authReady;
-    uid = credential.user.uid;
-    console.log("Firebase verbonden! 💗");
-} catch (error) {
-    console.error("Firebase fout:", error);
-    alert("Firebase kon niet verbinden. Controleer je instellingen.");
-    throw error;
-}
-
-const userRef = ref(db, `users/${uid}`);
-const bestieRef = ref(db, `users/${uid}/bestie`);
-const messagesRef = ref(db, `users/${uid}/messages`);
-const diaryRef = ref(db, `users/${uid}/diary`);
-
-// =====================================
-// 2. MENU
-// =====================================
+const $ = (selector) => document.querySelector(selector);
 
 const pages = document.querySelectorAll(".page");
 const navButtons = document.querySelectorAll(".nav-button");
@@ -64,9 +44,13 @@ document.querySelectorAll("[data-go]").forEach(button => {
     });
 });
 
-// =====================================
-// 3. BESTIE
-// =====================================
+showPage("home");
+
+// ======================================
+// 2. BESTIE EN GEGEVENS
+// ======================================
+
+const STORAGE_KEY = "my-bestie-data";
 
 let bestie = {
     name: "Luna",
@@ -74,189 +58,78 @@ let bestie = {
     avatar: "🐰"
 };
 
+let messages = [];
+let diaryEntries = [];
+
+let firebaseEnabled = false;
+let bestieRef = null;
+let messagesRef = null;
+let diaryRef = null;
+
+function saveLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        bestie,
+        messages,
+        diaryEntries
+    }));
+}
+
+function loadLocal() {
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(STORAGE_KEY) || "{}"
+        );
+
+        if (saved.bestie) {
+            bestie = { ...bestie, ...saved.bestie };
+        }
+
+        messages = saved.messages || [];
+        diaryEntries = saved.diaryEntries || [];
+    } catch (error) {
+        console.log("Geen lokale gegevens gevonden.");
+    }
+}
+
 function updateBestie() {
-    document.querySelector("#home-name").textContent = bestie.name;
-    document.querySelector("#room-name").textContent = bestie.name;
+    $("#home-name").textContent = bestie.name;
+    $("#room-name").textContent = bestie.name;
 
-    document.querySelector("#home-avatar").textContent = bestie.avatar;
-    document.querySelector("#room-avatar").textContent = bestie.avatar;
+    $("#home-avatar").textContent = bestie.avatar;
+    $("#room-avatar").textContent = bestie.avatar;
 
-    document.querySelector("#home-description").textContent =
+    $("#home-description").textContent =
         bestie.type === "girl"
             ? "Jouw nieuwe beste vriendin! 🎀"
             : "Jouw nieuwe beste vriend! 💙";
 
-    document.querySelector("#bestie-name").value = bestie.name;
-    document.querySelector("#bestie-type").value = bestie.type;
-    document.querySelector("#bestie-avatar").value = bestie.avatar;
+    $("#bestie-name").value = bestie.name;
+    $("#bestie-type").value = bestie.type;
+    $("#bestie-avatar").value = bestie.avatar;
 }
 
-async function loadBestie() {
-    const snapshot = await get(bestieRef);
+loadLocal();
+updateBestie();
 
-    if (snapshot.exists()) {
-        bestie = { ...bestie, ...snapshot.val() };
-    } else {
-        await set(bestieRef, bestie);
-    }
+// ======================================
+// 3. CHAT WEERGEVEN
+// ======================================
 
-    updateBestie();
-}
+function renderMessages() {
+    const container = $("#messages");
+    container.replaceChildren();
 
-// =====================================
-// 4. BESTIE INSTELLINGEN
-// =====================================
-
-document.querySelector("#settings-form")
-.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const name = document.querySelector("#bestie-name").value.trim();
-
-    if (!name) {
-        alert("Vul eerst een naam in! 💗");
+    if (messages.length === 0) {
+        addMessage("Hiiii! 💗 Wat leuk dat je er bent!", "bestie");
         return;
     }
 
-    bestie = {
-        name: name,
-        type: document.querySelector("#bestie-type").value,
-        avatar: document.querySelector("#bestie-avatar").value
-    };
-
-    try {
-        await set(bestieRef, bestie);
-        updateBestie();
-        alert("Je bestie is opgeslagen! 💕");
-    } catch (error) {
-        console.error(error);
-        alert("Opslaan is niet gelukt.");
-    }
-});
-
-// =====================================
-// 5. CHAT REACTIES
-// =====================================
-
-const reactions = [
-    {
-        words: ["hoi", "hallo", "hey", "heyy", "hiiii"],
-        replies: [
-            "Hiiii! 💗 Hoe gaat het?",
-            "Hééé! Wat gezellig dat je er bent!",
-            "Hiiii bestieee! 🎀",
-            "HOIIII! Ik heb je gemist!"
-        ]
-    },
-    {
-        words: ["goed", "prima", "leuk"],
-        replies: [
-            "Jaaa wat fijn!! 💕",
-            "Dat is superleuk om te horen!",
-            "Oeeee vertel eens meer!",
-            "Wat heb je vandaag gedaan?"
-        ]
-    },
-    {
-        words: ["slecht", "verdrietig", "rot"],
-        replies: [
-            "Ah wat jammer! Wil je erover vertellen? 💗",
-            "Ik luister naar je!",
-            "Wat vervelend! Zullen we even gezellig kletsen?"
-        ]
-    },
-    {
-        words: ["verveel", "saai"],
-        replies: [
-            "Oeeee zullen we een spelletje doen? 🎲",
-            "Zullen we een leuke challenge bedenken?",
-            "Ik heb zin in iets gezelligs! 💕"
-        ]
-    },
-    {
-        words: ["spelletje", "spelen"],
-        replies: [
-            "JAAAA! Zullen we een raadspelletje doen?",
-            "Leuk!! Ik ben klaar voor een spelletje!",
-            "Okee! Kies jij maar wat!"
-        ]
-    },
-    {
-        words: ["bedankt", "dankjewel"],
-        replies: [
-            "Geen probleem bestie! 💗",
-            "Altijd!!",
-            "Graag gedaan! 🎀"
-        ]
-    },
-    {
-        words: ["doei", "dag"],
-        replies: [
-            "Doeiiii! Tot snel! 💕",
-            "Dag bestie! Ik vond het gezellig!",
-            "Tot de volgende keer!!"
-        ]
-    },
-    {
-        words: ["eten", "honger"],
-        replies: [
-            "Oeeee wat ga je eten?",
-            "Ik ben benieuwd wat je lekker vindt! 🍓",
-            "Vertel! Wat is je lievelingseten?"
-        ]
-    },
-    {
-        words: ["school", "huiswerk"],
-        replies: [
-            "Hoe was het op school?",
-            "Heb je veel huiswerk?",
-            "Wat was het leukste vandaag?"
-        ]
-    },
-    {
-        words: ["geheim", "vertellen"],
-        replies: [
-            "Oeeee ik luister! 💗",
-            "Vertel maar, ik ben benieuwd!",
-            "Wat spannend! Wat is er?"
-        ]
-    }
-];
-
-function getReply(message) {
-    const lowerMessage = message.toLowerCase();
-
-    for (const group of reactions) {
-        if (group.words.some(word => lowerMessage.includes(word))) {
-            const random = Math.floor(
-                Math.random() * group.replies.length
-            );
-
-            return group.replies[random];
-        }
-    }
-
-    const defaultReplies = [
-        "Oeeee vertel verder! 💗",
-        "Echt waar?! Vertel eens!",
-        "Wat leuk dat je dat vertelt!",
-        "Hahaha! En wat gebeurde er toen?",
-        "Ik luister bestieee! 🎀",
-        "Wat vind jij daar zelf van?",
-        "Oehh interessant! Vertel meer!",
-        "Hihi! En toen?"
-    ];
-
-    return defaultReplies[
-        Math.floor(Math.random() * defaultReplies.length)
-    ];
+    [...messages]
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+        .forEach(message => {
+            addMessage(message.text, message.sender);
+        });
 }
-
-// =====================================
-// 6. CHAT BERICHTEN
-// =====================================
-
-const messagesElement = document.querySelector("#messages");
 
 function addMessage(message, sender) {
     const element = document.createElement("p");
@@ -267,156 +140,372 @@ function addMessage(message, sender) {
 
     element.textContent = message;
 
-    messagesElement.appendChild(element);
-
-    messagesElement.scrollTop = messagesElement.scrollHeight;
+    $("#messages").appendChild(element);
+    $("#messages").scrollTop = $("#messages").scrollHeight;
 }
 
-onValue(messagesRef, snapshot => {
-    messagesElement.replaceChildren();
+// ======================================
+// 4. CHAT ANTWOORDEN
+// ======================================
 
-    if (!snapshot.exists()) {
-        addMessage(
-            "Hiiii! 💗 Wat leuk dat je er bent!",
-            "bestie"
-        );
+const reactions = [
+    {
+        words: ["hoi", "hallo", "hey", "heyy"],
+        replies: [
+            "Hiiii! 💗 Hoe gaat het?",
+            "Hééé! Wat gezellig!",
+            "Hiiii bestieee! 🎀"
+        ]
+    },
+    {
+        words: ["goed", "prima", "leuk"],
+        replies: [
+            "Jaaa wat fijn!! 💕",
+            "Dat is superleuk!",
+            "Oeeee vertel eens meer!"
+        ]
+    },
+    {
+        words: ["slecht", "verdrietig", "rot"],
+        replies: [
+            "Ah wat jammer! Wil je erover vertellen? 💗",
+            "Ik luister naar je!",
+            "Wat vervelend!"
+        ]
+    },
+    {
+        words: ["verveel", "saai"],
+        replies: [
+            "Zullen we een spelletje doen? 🎲",
+            "Zullen we een challenge bedenken?",
+            "Ik heb zin in iets gezelligs!"
+        ]
+    },
+    {
+        words: ["spelletje", "spelen"],
+        replies: [
+            "JAAAA! Zullen we een raadspelletje doen?",
+            "Leuk!! Ik ben klaar!",
+            "Okee! Kies jij maar wat!"
+        ]
+    },
+    {
+        words: ["bedankt", "dankjewel"],
+        replies: [
+            "Geen probleem! 💗",
+            "Altijd!!",
+            "Graag gedaan! 🎀"
+        ]
+    },
+    {
+        words: ["doei", "dag"],
+        replies: [
+            "Doeiiii! Tot snel! 💕",
+            "Tot de volgende keer!"
+        ]
+    },
+    {
+        words: ["eten", "honger"],
+        replies: [
+            "Oeeee wat ga je eten?",
+            "Wat is je lievelingseten? 🍓"
+        ]
+    },
+    {
+        words: ["school", "huiswerk"],
+        replies: [
+            "Hoe was het op school?",
+            "Heb je veel huiswerk?",
+            "Wat was het leukste vandaag?"
+        ]
+    }
+];
+
+function getReply(message) {
+    const lower = message.toLowerCase();
+
+    for (const group of reactions) {
+        if (group.words.some(word => lower.includes(word))) {
+            return group.replies[
+                Math.floor(Math.random() * group.replies.length)
+            ];
+        }
+    }
+
+    return "Oeeee vertel verder! 💗";
+}
+
+renderMessages();
+
+// ======================================
+// 5. DAGBOEK WEERGEVEN
+// ======================================
+
+function renderDiary() {
+    const container = $("#diary-entries");
+    container.replaceChildren();
+
+    if (diaryEntries.length === 0) {
+        container.textContent =
+            "Jullie hebben nog geen herinneringen. 💗";
         return;
     }
 
-    const messages = Object.values(snapshot.val());
+    [...diaryEntries].reverse().forEach(entry => {
+        const card = document.createElement("div");
+        card.className = "diary-entry";
 
-    messages.sort(
-        (a, b) => (a.createdAt || 0) - (b.createdAt || 0)
-    );
+        const date = document.createElement("div");
+        date.className = "diary-date";
+        date.textContent = entry.date;
 
-    messages.forEach(message => {
-        addMessage(message.text, message.sender);
+        const content = document.createElement("p");
+        content.textContent = entry.text;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Verwijderen 🗑️";
+
+        deleteButton.addEventListener("click", () => {
+            deleteDiaryEntry(entry.id);
+        });
+
+        card.append(date, content, deleteButton);
+        container.appendChild(card);
     });
-});
+}
 
-// =====================================
-// 7. BERICHT VERSTUREN
-// =====================================
+renderDiary();
 
-document.querySelector("#chat-form")
-.addEventListener("submit", async event => {
+// ======================================
+// 6. FIREBASE VERBINDING
+// ======================================
+
+const firebaseStartup = (async () => {
+    try {
+        const credential = await authReady;
+        const uid = credential.user.uid;
+
+        bestieRef = ref(db, `users/${uid}/bestie`);
+        messagesRef = ref(db, `users/${uid}/messages`);
+        diaryRef = ref(db, `users/${uid}/diary`);
+
+        const bestieSnapshot = await get(bestieRef);
+        const messagesSnapshot = await get(messagesRef);
+        const diarySnapshot = await get(diaryRef);
+
+        if (bestieSnapshot.exists()) {
+            bestie = { ...bestie, ...bestieSnapshot.val() };
+        } else {
+            await set(bestieRef, bestie);
+        }
+
+        messages = messagesSnapshot.exists()
+            ? Object.entries(messagesSnapshot.val()).map(
+                ([id, item]) => ({ id, ...item })
+            )
+            : [];
+
+        diaryEntries = diarySnapshot.exists()
+            ? Object.entries(diarySnapshot.val()).map(
+                ([id, item]) => ({ id, ...item })
+            )
+            : [];
+
+        firebaseEnabled = true;
+
+        updateBestie();
+        renderMessages();
+        renderDiary();
+
+        onValue(messagesRef, snapshot => {
+            messages = snapshot.exists()
+                ? Object.entries(snapshot.val()).map(
+                    ([id, item]) => ({ id, ...item })
+                )
+                : [];
+
+            renderMessages();
+            saveLocal();
+        });
+
+        onValue(diaryRef, snapshot => {
+            diaryEntries = snapshot.exists()
+                ? Object.entries(snapshot.val()).map(
+                    ([id, item]) => ({ id, ...item })
+                )
+                : [];
+
+            renderDiary();
+            saveLocal();
+        });
+
+        console.log("Firebase verbonden! 💗");
+
+    } catch (error) {
+        firebaseEnabled = false;
+
+        console.error("Firebase-fout:", error);
+
+        saveLocal();
+    }
+})();
+
+// ======================================
+// 7. INSTELLINGEN OPSLAAN
+// ======================================
+
+$("#settings-form").addEventListener("submit", async event => {
     event.preventDefault();
 
-    const input = document.querySelector("#chat-input");
+    const name = $("#bestie-name").value.trim();
+
+    if (!name) {
+        alert("Vul eerst een naam in! 💗");
+        return;
+    }
+
+    bestie = {
+        name,
+        type: $("#bestie-type").value,
+        avatar: $("#bestie-avatar").value
+    };
+
+    updateBestie();
+    saveLocal();
+
+    await firebaseStartup;
+
+    if (firebaseEnabled) {
+        try {
+            await set(bestieRef, bestie);
+        } catch (error) {
+            console.error(error);
+            alert("Online opslaan is niet gelukt.");
+            return;
+        }
+    }
+
+    alert("Je bestie is opgeslagen! 💕");
+});
+
+// ======================================
+// 8. CHATBERICHT VERSTUREN
+// ======================================
+
+$("#chat-form").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const input = $("#chat-input");
     const message = input.value.trim();
 
     if (!message) return;
 
     input.value = "";
 
-    try {
-        await push(messagesRef, {
-            text: message,
-            sender: "user",
-            createdAt: Date.now()
-        });
+    await firebaseStartup;
 
-        const reply = getReply(message);
+    const now = Date.now();
 
-        await push(messagesRef, {
-            text: reply,
-            sender: "bestie",
-            createdAt: Date.now() + 1
-        });
+    const userMessage = {
+        text: message,
+        sender: "user",
+        createdAt: now
+    };
 
-    } catch (error) {
-        console.error("Chat fout:", error);
-        alert("Je bericht kon niet worden verstuurd.");
-    }
-});
+    const bestieMessage = {
+        text: getReply(message),
+        sender: "bestie",
+        createdAt: now + 1
+    };
 
-// =====================================
-// 8. DAGBOEK
-// =====================================
-
-const diaryEntries = document.querySelector("#diary-entries");
-
-onValue(diaryRef, snapshot => {
-    diaryEntries.replaceChildren();
-
-    if (!snapshot.exists()) {
-        diaryEntries.textContent =
-            "Jullie hebben nog geen herinneringen. 💗";
-        return;
+    if (firebaseEnabled) {
+        try {
+            await push(messagesRef, userMessage);
+            await push(messagesRef, bestieMessage);
+            return;
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    const entries = Object.entries(snapshot.val()).reverse();
-
-    entries.forEach(([id, entry]) => {
-        const card = document.createElement("div");
-        card.className = "diary-entry";
-
-        const date = document.createElement("div");
-        date.className = "diary-date";
-        date.textContent = entry.date || "Een herinnering";
-
-        const content = document.createElement("p");
-        content.textContent = entry.text;
-
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Verwijderen 🗑️";
-
-        deleteButton.addEventListener("click", async () => {
-            if (!confirm("Wil je deze herinnering verwijderen?")) {
-                return;
-            }
-
-            try {
-                await remove(ref(db, `users/${uid}/diary/${id}`));
-            } catch (error) {
-                console.error(error);
-                alert("Verwijderen is niet gelukt.");
-            }
-        });
-
-        card.append(date, content, deleteButton);
-        diaryEntries.appendChild(card);
-    });
+    messages.push(userMessage, bestieMessage);
+    saveLocal();
+    renderMessages();
 });
 
-// =====================================
-// 9. HERINNERING OPSLAAN
-// =====================================
+// ======================================
+// 9. DAGBOEK OPSLAAN
+// ======================================
 
-document.querySelector("#diary-form")
-.addEventListener("submit", async event => {
+$("#diary-form").addEventListener("submit", async event => {
     event.preventDefault();
 
-    const input = document.querySelector("#diary-input");
+    const input = $("#diary-input");
     const text = input.value.trim();
 
     if (!text) return;
 
-    try {
-        await push(diaryRef, {
-            text: text,
-            date: new Date().toLocaleString("nl-NL"),
-            createdAt: serverTimestamp()
-        });
+    await firebaseStartup;
 
-        input.value = "";
-        alert("Herinnering opgeslagen! 💗");
+    const entry = {
+        text,
+        date: new Date().toLocaleString("nl-NL"),
+        createdAt: Date.now()
+    };
 
-    } catch (error) {
-        console.error(error);
-        alert("Opslaan is niet gelukt.");
+    if (firebaseEnabled) {
+        try {
+            await push(diaryRef, entry);
+            input.value = "";
+            alert("Herinnering opgeslagen! 💗");
+            return;
+        } catch (error) {
+            console.error(error);
+        }
     }
+
+    entry.id = "local-" + Date.now();
+
+    diaryEntries.push(entry);
+    saveLocal();
+    renderDiary();
+
+    input.value = "";
+    alert("Herinnering opgeslagen op dit apparaat! 💗");
 });
 
-// =====================================
-// 10. WEBSITE STARTEN
-// =====================================
+// ======================================
+// 10. DAGBOEK VERWIJDEREN
+// ======================================
 
-try {
-    await loadBestie();
-    showPage("home");
-    console.log("My Bestie is klaar! 🎀");
-} catch (error) {
-    console.error("Website kon niet volledig starten:", error);
-    alert("Er ging iets mis bij het laden van je bestie.");
+async function deleteDiaryEntry(id) {
+    if (!confirm("Wil je deze herinnering verwijderen?")) {
+        return;
+    }
+
+    await firebaseStartup;
+
+    if (firebaseEnabled && !String(id).startsWith("local-")) {
+        try {
+            const uid = (await authReady).user.uid;
+
+            await remove(
+                ref(db, `users/${uid}/diary/${id}`)
+            );
+
+            return;
+        } catch (error) {
+            console.error(error);
+            alert("Verwijderen is niet gelukt.");
+            return;
+        }
+    }
+
+    diaryEntries = diaryEntries.filter(entry => entry.id !== id);
+
+    saveLocal();
+    renderDiary();
 }
+
+console.log("My Bestie is gestart! 🎀");
