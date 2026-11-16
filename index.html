@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="nlgh">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,11 +14,11 @@
     </header>
 
     <div class="app">
-
         <aside class="sidebar">
             <h2>Menu 🎀</h2>
             <button class="nav-button active" data-page="home">🏠 Home</button>
             <button class="nav-button" data-page="chat">💬 Chat</button>
+            <button class="nav-button" data-page="games">🎮 Spelletjes</button>
             <button class="nav-button" data-page="diary">📖 Dagboek</button>
             <button class="nav-button" data-page="room">🛏️ Kamertje</button>
             <button class="nav-button" data-page="settings">⚙️ Instellingen</button>
@@ -72,6 +71,30 @@
                         >
                         <button type="submit">Verstuur 💌</button>
                     </form>
+                </div>
+            </section>
+
+            <section id="games" class="page">
+                <div class="section-heading">
+                    <h2>🎮 Samen spelletjes doen</h2>
+                    <p>Kies een spelletje en speel gezellig mee met je bestie!</p>
+                </div>
+
+                <div class="games-grid">
+                    <button class="game-button" data-game="truth">💬 Waarheid</button>
+                    <button class="game-button" data-game="dare">🎭 Durven</button>
+                    <button class="game-button" data-game="would">🤔 Dit of dat</button>
+                    <button class="game-button" data-game="word">🔤 Raad het woord</button>
+                </div>
+
+                <div id="game-output" class="game-output" aria-live="polite">
+                    Kies hierboven een spelletje om te beginnen! 💗
+                </div>
+
+                <div class="game-controls">
+                    <input id="game-answer" type="text" placeholder="Typ je antwoord of gok..." hidden maxlength="40">
+                    <button id="game-submit" class="main-button" type="button" hidden>Controleren</button>
+                    <button id="game-next" class="main-button" type="button">Volgende ➜</button>
                 </div>
             </section>
 
