@@ -1,4 +1,3 @@
-
 import { db, authReady } from "./firebase.js";
 
 import {
@@ -145,97 +144,219 @@ function addMessage(message, sender) {
 }
 
 // ======================================
-// 4. CHAT ANTWOORDEN
+// 4. SERIEUZERE CHATANTWOORDEN
 // ======================================
 
-const reactions = [
-    {
-        words: ["hoi", "hallo", "hey", "heyy"],
-        replies: [
-            "Hiiii! 💗 Hoe gaat het?",
-            "Hééé! Wat gezellig!",
-            "Hiiii bestieee! 🎀"
-        ]
-    },
-    {
-        words: ["goed", "prima", "leuk"],
-        replies: [
-            "Jaaa wat fijn!! 💕",
-            "Dat is superleuk!",
-            "Oeeee vertel eens meer!"
-        ]
-    },
-    {
-        words: ["slecht", "verdrietig", "rot"],
-        replies: [
-            "Ah wat jammer! Wil je erover vertellen? 💗",
-            "Ik luister naar je!",
-            "Wat vervelend!"
-        ]
-    },
-    {
-        words: ["verveel", "saai"],
-        replies: [
-            "Zullen we een spelletje doen? 🎲",
-            "Zullen we een challenge bedenken?",
-            "Ik heb zin in iets gezelligs!"
-        ]
-    },
-    {
-        words: ["spelletje", "spelen"],
-        replies: [
-            "JAAAA! Zullen we een raadspelletje doen?",
-            "Leuk!! Ik ben klaar!",
-            "Okee! Kies jij maar wat!"
-        ]
-    },
-    {
-        words: ["bedankt", "dankjewel"],
-        replies: [
-            "Geen probleem! 💗",
-            "Altijd!!",
-            "Graag gedaan! 🎀"
-        ]
-    },
-    {
-        words: ["doei", "dag"],
-        replies: [
-            "Doeiiii! Tot snel! 💕",
-            "Tot de volgende keer!"
-        ]
-    },
-    {
-        words: ["eten", "honger"],
-        replies: [
-            "Oeeee wat ga je eten?",
-            "Wat is je lievelingseten? 🍓"
-        ]
-    },
-    {
-        words: ["school", "huiswerk"],
-        replies: [
-            "Hoe was het op school?",
-            "Heb je veel huiswerk?",
-            "Wat was het leukste vandaag?"
-        ]
-    }
-];
+// Dit is een lokale antwoordfunctie. Voor echte AI-antwoorden op
+// werkelijk ieder onderwerp is later een beveiligde AI-server nodig.
+
+const replyMemory = { lastTopic: "" };
 
 function getReply(message) {
-    const lower = message.toLowerCase();
+    const text = message.trim();
+    const lower = text.toLowerCase();
+    const has = (...words) => words.some(word => lower.includes(word));
 
-    for (const group of reactions) {
-        if (group.words.some(word => lower.includes(word))) {
-            return group.replies[
-                Math.floor(Math.random() * group.replies.length)
-            ];
-        }
+    if (/^(hoi|hallo|hey|heyy|hi)\b/.test(lower)) {
+        return `Hoi! 💗 Fijn dat je er bent. Hoe gaat het vandaag écht met je?`;
     }
 
-    return "Oeeee vertel verder! 💗";
+    if (has("bedankt", "dankjewel", "thanks")) {
+        return "Graag gedaan! 💗 Is er nog iets waarbij ik je kan helpen?";
+    }
+
+    if (/\b(doei|dag|tot later)\b/.test(lower)) {
+        return "Doei! 💕 Bedankt voor het kletsen. Tot de volgende keer!";
+    }
+
+    if (has("verdrietig", "verdriet", "somber", "rot", "down", "huilen", "stress", "gestrest", "zorgen")) {
+        return "Dat klinkt best lastig. Wil je vertellen wat er precies is gebeurd of wat je dwarszit? Ik neem je serieus en denk met je mee. 💗";
+    }
+
+    if (has("boos", "kwaad", "irritant", "ruzie", "gemeen")) {
+        return "Ik hoor dat je boos bent. Wat is er gebeurd? Dan kunnen we samen rustig bekijken wat je eraan kunt doen.";
+    }
+
+    if (has("blij", "gelukkig", "geweldig", "superleuk", "geslaagd")) {
+        return "Wat fijn om te horen! Wat maakte het moment zo leuk? Vertel eens! 💕";
+    }
+
+    if (has("school", "huiswerk", "toets", "leraar", "juf", "meester")) {
+        return "Vertel eens wat er op school speelt. Gaat het om huiswerk, een toets, iemand uit je klas of iets anders? Ik help je graag stap voor stap.";
+    }
+
+    if (has("vriendin", "vriend", "vriendinnen", "vriendschap", "verkering", "verliefd")) {
+        return "Vriendschappen en gevoelens kunnen soms best ingewikkeld zijn. Wat is er precies aan de hand?";
+    }
+
+    if (has("advies", "wat moet ik doen", "help me", "hoe kan ik")) {
+        return "Ik denk graag met je mee. Kun je iets meer vertellen over de situatie en wat je zelf het liefst zou willen? Dan zoeken we samen naar een goede oplossing.";
+    }
+
+    if (has("spelletje", "spelen", "game", "challenge")) {
+        return "Jaaa! 🎮 Ga naar Spelletjes in het menu. Daar kunnen we bijvoorbeeld Waarheid of durven, Dit of dat en Raad het woord spelen!";
+    }
+
+    if (has("verveel", "saai")) {
+        return "Zullen we iets doen? 🎲 Open Spelletjes in het menu en kies een spel. Of vertel wat voor soort spel je leuk vindt.";
+    }
+
+    if (text.endsWith("?") || /^(wie|wat|waar|wanneer|waarom|hoe|welke|kan|mag|is|zijn|heeft|hebben)\b/.test(lower)) {
+        return "Goede vraag! Ik wil je een passend antwoord geven en niet zomaar iets verzinnen. Kun je iets meer context geven, bijvoorbeeld waar het over gaat of wat je al weet?";
+    }
+
+    return "Ik wil goed begrijpen wat je bedoelt. Kun je daar iets meer over vertellen? Dan geef ik je een serieus antwoord en denk ik met je mee. 💗";
 }
 
 renderMessages();
+
+// ======================================
+// 4B. SPELLETJES
+// ======================================
+
+const gameOutput = document.querySelector("#game-output");
+const gameButtons = document.querySelectorAll("[data-game]");
+
+let activeGame = "";
+let gameRound = 0;
+let secretWord = "";
+
+const gamePrompts = {
+    truth: [
+        "Wat is iets waar je heel trots op bent?",
+        "Wat is de grappigste herinnering die je hebt?",
+        "Welke plek zou je graag eens bezoeken?",
+        "Wat is iets nieuws dat je graag zou willen leren?",
+        "Wat waardeer je het meest in een goede vriendin of vriend?"
+    ],
+
+    dare: [
+        "Praat 30 seconden alsof je een nieuwslezer bent.",
+        "Verzin een reclame voor een gewone lepel.",
+        "Doe een dier na en laat de ander raden welk dier het is.",
+        "Zing een zelfverzonnen liedje van twee regels.",
+        "Bedenk in 20 seconden drie namen voor een alien."
+    ],
+
+    would: [
+        "Zou je liever kunnen vliegen of onzichtbaar worden?",
+        "Zou je liever altijd zomer hebben of altijd winter?",
+        "Zou je liever met dieren kunnen praten of alle talen spreken?",
+        "Zou je liever een boomhut of een geheime kamer hebben?",
+        "Zou je liever nooit meer hoeven afwassen of nooit meer hoeven opruimen?"
+    ]
+};
+
+const wordList = [
+    "regenboog",
+    "pannenkoek",
+    "dolfijn",
+    "bibliotheek",
+    "zonnebloem",
+    "verrekijker",
+    "chocolade"
+];
+
+function showGame(text) {
+    if (gameOutput) {
+        gameOutput.textContent = text;
+    }
+}
+
+function startGame(game) {
+    activeGame = game;
+    gameRound = 0;
+
+    if (game === "word") {
+        secretWord = wordList[Math.floor(Math.random() * wordList.length)];
+
+        showGame(
+            "Raad het woord! Het woord heeft " +
+            secretWord.length +
+            " letters. Typ je gok in het vak hieronder."
+        );
+
+        document.querySelector("#game-answer").hidden = false;
+        document.querySelector("#game-submit").hidden = false;
+        return;
+    }
+
+    document.querySelector("#game-answer").hidden = true;
+    document.querySelector("#game-submit").hidden = true;
+
+    nextGamePrompt();
+}
+
+function nextGamePrompt() {
+    const list = gamePrompts[activeGame];
+
+    if (!list) return;
+
+    const prompt = list[gameRound % list.length];
+    gameRound++;
+
+    const heading =
+        activeGame === "truth"
+            ? "Waarheid 💬"
+            : activeGame === "dare"
+                ? "Durven 🎭"
+                : "Dit of dat 🤔";
+
+    showGame(
+        heading +
+        "\n\n" +
+        prompt +
+        "\n\nDruk op ‘Volgende’ voor nog een opdracht."
+    );
+}
+
+gameButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        startGame(button.dataset.game);
+    });
+});
+
+document.querySelector("#game-next")?.addEventListener("click", () => {
+    if (!activeGame) {
+        showGame("Kies eerst hierboven een spelletje!");
+        return;
+    }
+
+    if (activeGame === "word") {
+        secretWord = wordList[Math.floor(Math.random() * wordList.length)];
+
+        showGame(
+            "Nieuw woord! Het heeft " +
+            secretWord.length +
+            " letters. Raad maar!"
+        );
+    } else {
+        nextGamePrompt();
+    }
+});
+
+document.querySelector("#game-submit")?.addEventListener("click", () => {
+    const answer = document.querySelector("#game-answer");
+    const guess = answer.value.trim().toLowerCase();
+
+    if (!guess) return;
+
+    if (guess === secretWord) {
+        showGame(
+            "Jaaa, goed geraden! 🎉 Het woord was " +
+            secretWord +
+            ". Druk op ‘Volgende’ voor een nieuw woord."
+        );
+
+        answer.value = "";
+    } else {
+        showGame(
+            "Nog niet goed! Tip: het woord begint met de letter ‘" +
+            secretWord[0] +
+            "’. Probeer nog eens."
+        );
+    }
+});
 
 // ======================================
 // 5. DAGBOEK WEERGEVEN
